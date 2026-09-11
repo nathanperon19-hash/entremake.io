@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carnet de bord</title>
+<style>
+:root {
+  --paper: #F8F6EF;
+  --grid-line: #C3D2E8;
+  --margin-line: #C97C74;
+  --ink: #1E2A3C;
+  --ink-soft: #5B6678;
+  --blue: #33507D;
+  --red: #B8453A;
+  --green: #3E7A57;
+  --ochre: #B98A3B;
+  --purple: #6B5B95;
+  --teal: #39807E;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+
+button, input, select, textarea { font-family: inherit; }
+
+#app { min-height: 100vh; padding-bottom: 60px; }
+
+.seyes-bg {
+  background-image: repeating-linear-gradient(var(--grid-line) 0 1px, transparent 1px 28px);
+  background-position: 0 6px;
+}
+
+header.app-header {
+  border-bottom: 2px solid var(--margin-line);
+  padding: 26px 20px 18px;
+}
+.header-inner {
+  max-width: 980px; margin: 0 auto;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.app-title {
+  margin: 0; font-family: Georgia, "Iowan Old Style", serif;
+  font-size: 34px; color: var(--blue); font-weight: 700; letter-spacing: -0.01em;
+}
+.app-subtitle { margin: 4px 0 0; color: var(--ink-soft); font-size: 14px; }
+
+.pill-group { display: flex; gap: 6px; }
+.pill {
+  padding: 6px 12px; font-size: 13px; border-radius: 4px;
+  border: 1px solid var(--grid-line); background: transparent; color: var(--ink-soft); cursor: pointer;
+}
+.pill.active { border-color: var(--blue); background: var(--blue); color: #fff; }
+
+.tab-bar { max-width: 980px; margin: 0 auto; padding: 18px 20px 0; display: flex; gap: 4px; }
+.tab-btn {
+  padding: 9px 20px; font-size: 14.5px; font-weight: 600;
+  border: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
+  border-radius: 6px 6px 0 0; background: #EDEAE0; color: var(--ink);
+  position: relative; top: 1px; cursor: pointer;
+}
+.tab-btn.active { background: var(--paper); border-bottom: 1.5px solid transparent; }
+.tab-spacer { flex: 1; border-bottom: 1.5px solid var(--ink); }
+
+main { max-width: 980px; margin: 0 auto; padding: 8px 20px 64px; }
+
+.action-row { display: flex; gap: 8px; margin: 22px 0 18px; align-items: center; }
+.action-btn {
+  padding: 8px 14px; font-size: 13.5px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--ink); background: transparent; color: var(--ink); font-weight: 500;
+}
+.action-btn.active { border-color: var(--blue); background: var(--blue); color: #fff; }
+.link-btn { background: none; border: none; color: var(--ink-soft); font-size: 13px; cursor: pointer; }
+
+.form-panel { border: 1px solid var(--grid-line); border-radius: 6px; padding: 14px; background: #FFFDF9; margin-bottom: 18px; }
+.form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; font-size: 12px; color: var(--ink-soft); gap: 3px; }
+.field input, .field select {
+  padding: 7px 8px; border: 1px solid var(--grid-line); border-radius: 4px; font-size: 13.5px; color: var(--ink);
+}
+.submit-btn { padding: 8px 16px; font-size: 13.5px; font-weight: 600; border-radius: 4px; border: none; background: var(--blue); color: #fff; cursor: pointer; }
+.submit-btn:disabled { opacity: .5; cursor: default; }
+textarea.csv-input {
+  width: 100%; padding: 10px; border: 1px solid var(--grid-line); border-radius: 4px; font-size: 13px;
+  font-family: ui-monospace, monospace; resize: vertical;
+}
+.hint-text { margin: 0 0 8px; font-size: 13px; color: var(--ink-soft); }
+
+.empty-state {
+  border: 1.5px dashed var(--grid-line); border-radius: 6px; padding: 38px 20px;
+  text-align: center; color: var(--ink-soft); font-size: 14px;
+}
+
+.stats-row { display: flex; align-items: center; gap: 20px; margin: 22px 0 26px; flex-wrap: wrap; }
+.stamp {
+  width: 108px; height: 108px; border-radius: 50%; border: 3px solid var(--red);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transform: rotate(-6deg); flex-shrink: 0; color: var(--red);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+.stamp .stamp-value { font-size: 26px; font-weight: 700; line-height: 1; }
+.stamp .stamp-label { font-size: 9.5px; margin-top: 4px; text-align: center; line-height: 1.15; padding: 0 10px; }
+
+.bar-chart { flex: 1; min-width: 260px; height: 150px; display: flex; align-items: flex-end; gap: 10px; padding: 6px 4px 0; border-bottom: 1px solid var(--grid-line); position: relative; }
+.bar-chart .avg-line { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--ink); }
+.bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; height: 100%; }
+.bar-col .bar { width: 60%; border-radius: 3px 3px 0 0; min-height: 2px; }
+.bar-col .bar-label { font-size: 10px; color: var(--ink-soft); margin-top: 4px; text-align: center; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-col .bar-value { font-size: 10.5px; font-weight: 700; }
+
+.subject-card { border: 1.5px solid var(--ink); border-radius: 6px; overflow: hidden; background: #fff; margin-bottom: 14px; }
+.subject-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
+.subject-stripe { width: 4px; align-self: stretch; border-radius: 2px; }
+.subject-name { font-weight: 600; font-size: 15.5px; }
+.subject-meta { font-size: 12.5px; color: var(--ink-soft); }
+.subject-avg { font-family: ui-monospace, monospace; font-size: 18px; font-weight: 700; }
+.subject-body { border-top: 1px solid var(--grid-line); padding: 10px 16px 16px; }
+.subject-coef-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--ink-soft); }
+.subject-coef-row input { width: 56px; padding: 3px 6px; border: 1px solid var(--grid-line); border-radius: 4px; }
+table.notes-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.notes-table th { font-weight: 500; padding: 4px 0; text-align: left; color: var(--ink-soft); }
+table.notes-table td { padding: 6px 0; border-top: 1px solid var(--grid-line); }
+
+.week-grid { border: 1.5px solid var(--ink); border-radius: 6px; overflow: hidden; background: #fff; }
+.week-header { display: grid; grid-template-columns: 44px repeat(6, 1fr); }
+.week-header .corner { border-bottom: 1px solid var(--ink); }
+.week-header .day-h {
+  padding: 8px 4px; text-align: center; font-size: 12.5px; font-weight: 700;
+  color: var(--blue); border-left: 1px solid var(--grid-line); border-bottom: 1px solid var(--ink);
+}
+.week-body { display: grid; grid-template-columns: 44px repeat(6, 1fr); position: relative; }
+.hour-col .hour-label { font-size: 10.5px; color: var(--ink-soft); text-align: right; padding-right: 5px; position: relative; top: -6px; }
+.day-col { position: relative; border-left: 1px solid var(--grid-line); }
+.hour-cell { border-bottom: 1px solid var(--grid-line); }
+.course-block {
+  position: absolute; left: 2px; right: 2px; border-radius: 3px; padding: 3px 5px;
+  overflow: hidden; font-size: 10.5px; cursor: pointer;
+}
+.course-block .c-name { font-weight: 700; line-height: 1.15; }
+.course-block .c-room { color: var(--ink-soft); line-height: 1.1; }
+.week-footer { margin: 0; padding: 8px 12px; font-size: 11.5px; color: var(--ink-soft); border-top: 1px solid var(--grid-line); }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); padding: 10px 18px;
+  border-radius: 4px; font-size: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  z-index: 50;
+}
+
+@media (max-width: 600px) {
+  .app-title { font-size: 26px; }
+  .stamp { width: 88px; height: 88px; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Design tokens ----------
+  const COURSE_PALETTE = ["#33507D", "#3E7A57", "#B98A3B", "#6B5B95", "#39807E", "#B8453A"];
+  const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+  const DAY_ABBR = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
+  const HOUR_START = 8, HOUR_END = 19, ROW_H = 44;
+  const STORAGE_KEY = "carnet-de-bord-v2";
+
+  // ---------- State ----------
+  let state = {
+    tab: "notes",
+    trimestre: "all",
+    subjects: [],
+    schedule: [],
+    showAddNote: false,
+    showImportNotes: false,
+    showAddCourse: false,
+    showImportICS: false,
+    openSubjects: {},
+    pendingICS: null,
+    pendingICSName: "",
+  };
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        state.subjects = data.subjects || [];
+        state.schedule = data.schedule || [];
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ subjects: state.subjects, schedule: state.schedule }));
+    } catch (e) { console.error("Sauvegarde impossible", e); }
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    let el = document.getElementById("toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "toast";
+      el.className = "toast";
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.display = "block";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.display = "none"; }, 2600);
+  }
+
+  // ---------- Helpers ----------
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+
+  function hashColor(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return COURSE_PALETTE[h % COURSE_PALETTE.length];
+  }
+
+  function esc(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function parseFrenchDate(str) {
+    if (!str) return new Date().toISOString().slice(0, 10);
+    str = str.trim();
+    let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (m) {
+      let [, d, mo, y] = m;
+      if (y.length === 2) y = "20" + y;
+      return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function trimestreOf(dateStr) {
+    const m = new Date(dateStr).getMonth() + 1;
+    if (m >= 9 && m <= 12) return 1;
+    if (m >= 1 && m <= 3) return 2;
+    return 3;
+  }
+
+  function formatDateFr(dateStr) {
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  }
+
+  function weightedAvg(items) {
+    const totalCoef = items.reduce((s, it) => s + (Number(it.coef) || 1), 0);
+    if (totalCoef === 0) return null;
+    const totalVal = items.reduce((s, it) => s + (Number(it.value) || 0) * (Number(it.coef) || 1), 0);
+    return totalVal / totalCoef;
+  }
+
+  function parseNotesCSV(text) {
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const rows = [];
+    for (const line of lines) {
+      const sep = line.includes(";") ? ";" : line.includes("\t") ? "\t" : ",";
+      const parts = line.split(sep).map((p) => p.trim());
+      if (parts.length < 2) continue;
+      const low = parts[0].toLowerCase();
+      if (low === "matiere" || low === "matière" || low === "subject") continue;
+      const [subject, valueRaw, coefRaw, dateRaw] = parts;
+      const value = parseFloat((valueRaw || "0").replace(",", "."));
+      if (isNaN(value)) continue;
+      rows.push({
+        subject,
+        value,
+        coef: coefRaw ? (parseFloat(coefRaw.replace(",", ".")) || 1) : 1,
+        date: parseFrenchDate(dateRaw),
+      });
+    }
+    return rows;
+  }
+
+  function unfoldICS(text) {
+    return text.replace(/\r\n/g, "\n").replace(/\n[ \t]/g, "");
+  }
+
+  function parseICSDate(val) {
+    const m = val.match(/^(\d{4})(\d{2})(\d{2})(T(\d{2})(\d{2}))?/);
+    if (!m) return null;
+    const [, y, mo, d, , hh, mm] = m;
+    return {
+      date: `${y}-${mo}-${d}`,
+      hour: hh ? parseInt(hh, 10) : null,
+      minute: mm ? parseInt(mm, 10) : null,
+      dayOfWeek: (new Date(`${y}-${mo}-${d}T00:00:00`).getDay() + 6) % 7,
+    };
+  }
+
+  function parseScheduleICS(text) {
+    const unfolded = unfoldICS(text);
+    const blocks = unfolded.split("BEGIN:VEVENT").slice(1);
+    const seen = new Map();
+    for (const block of blocks) {
+      const body = block.split("END:VEVENT")[0];
+      const get = (key) => {
+        const m = body.match(new RegExp(key + "(?:;[^:]*)?:([^\n]*)"));
+        return m ? m[1].trim() : "";
+      };
+      const summary = get("SUMMARY") || "Cours";
+      const location = get("LOCATION");
+      const description = get("DESCRIPTION");
+      const start = parseICSDate(get("DTSTART"));
+      const end = parseICSDate(get("DTEND"));
+      if (!start || start.hour === null || start.dayOfWeek > 5) continue;
+      const startStr = `${String(start.hour).padStart(2, "0")}:${String(start.minute).padStart(2, "0")}`;
+      const endStr = end && end.hour !== null
+        ? `${String(end.hour).padStart(2, "0")}:${String(end.minute).padStart(2, "0")}`
+        : `${String(start.hour + 1).padStart(2, "0")}:${String(start.minute).padStart(2, "0")}`;
+      const key = `${start.dayOfWeek}-${startStr}-${summary}`;
+      if (!seen.has(key)) {
+        seen.set(key, {
+          id: uid(), day: start.dayOfWeek, start: startStr, end: endStr,
+          subject: summary, room: location, prof: description.split("\\n")[0].slice(0, 60),
+          color: hashColor(summary),
+        });
+      }
+    }
+    return Array.from(seen.values());
+  }
+
+  // ---------- Mutations ----------
+  function addNote(subjectName, value, coef, date) {
+    const idx = state.subjects.findIndex((s) => s.name.toLowerCase() === subjectName.toLowerCase());
+    const note = { id: uid(), value, coef, date };
+    if (idx >= 0) state.subjects[idx].notes.push(note);
+    else state.subjects.push({ id: uid(), name: subjectName, coef: 1, notes: [note] });
+    save();
+  }
+
+  function deleteNote(subjectId, noteId) {
+    const s = state.subjects.find((s) => s.id === subjectId);
+    if (s) s.notes = s.notes.filter((n) => n.id !== noteId);
+    save(); render();
+  }
+
+  function deleteSubject(subjectId) {
+    state.subjects = state.subjects.filter((s) => s.id !== subjectId);
+    save(); render();
+  }
+
+  function updateCoef(subjectId, coef) {
+    const s = state.subjects.find((s) => s.id === subjectId);
+    if (s) s.coef = coef;
+    save();
+  }
+
+  function addCourse(course) {
+    state.schedule.push({ ...course, id: uid(), color: hashColor(course.subject) });
+    save();
+  }
+
+  function deleteCourse(id) {
+    state.schedule = state.schedule.filter((c) => c.id !== id);
+    save(); render();
+  }
+
+  // ---------- Rendering ----------
+  const root = document.getElementById("app");
+
+  function render() {
+    root.innerHTML = renderHeader() + renderTabBar() + `<main>${state.tab === "notes" ? renderNotesView() : renderScheduleView()}</main>`;
+    attachHandlers();
+  }
+
+  function renderHeader() {
+    const pills = ["all", 1, 2, 3].map((v) => {
+      const label = v === "all" ? "Année" : `Trim. ${v}`;
+      return `<button class="pill ${state.trimestre === v ? "active" : ""}" data-action="set-trimestre" data-value="${v}">${label}</button>`;
+    }).join("");
+    return `
+    <header class="app-header seyes-bg">
+      <div class="header-inner">
+        <div>
+          <h1 class="app-title">Carnet de bord</h1>
+          <p class="app-subtitle">Notes et emploi du temps, sans se battre avec un ENT.</p>
+        </div>
+        <div class="pill-group">${pills}</div>
+      </div>
+    </header>`;
+  }
+
+  function renderTabBar() {
+    return `
+    <div class="tab-bar">
+      <button class="tab-btn ${state.tab === "notes" ? "active" : ""}" data-action="set-tab" data-value="notes">Notes</button>
+      <button class="tab-btn ${state.tab === "edt" ? "active" : ""}" data-action="set-tab" data-value="edt">Emploi du temps</button>
+      <div class="tab-spacer"></div>
+    </div>`;
+  }
+
+  function filteredSubjects() {
+    return state.subjects.map((s) => ({
+      ...s,
+      notes: state.trimestre === "all" ? s.notes : s.notes.filter((n) => trimestreOf(n.date) === state.trimestre),
+    }));
+  }
+
+  function renderNotesView() {
+    const withAvg = filteredSubjects().map((s) => ({ ...s, avg: weightedAvg(s.notes) }));
+    const globalAvg = weightedAvg(withAvg.filter((s) => s.avg !== null).map((s) => ({ value: s.avg, coef: s.coef })));
+    const withData = withAvg.filter((s) => s.avg !== null);
+
+    let chartHtml = "";
+    if (withData.length > 0) {
+      const bars = withData.map((s) => {
+        const pct = Math.max((s.avg / 20) * 100, 2);
+        const color = globalAvg !== null && s.avg >= globalAvg ? "var(--green)" : "var(--red)";
+        return `
+        <div class="bar-col">
+          <div class="bar-value" style="color:${color}">${s.avg.toFixed(1)}</div>
+          <div class="bar" style="height:${pct}%; background:${color}"></div>
+          <div class="bar-label">${esc(s.name)}</div>
+        </div>`;
+      }).join("");
+      const avgLinePct = globalAvg !== null ? Math.max((globalAvg / 20) * 100, 0) : null;
+      chartHtml = `
+      <div class="bar-chart">
+        ${avgLinePct !== null ? `<div class="avg-line" style="bottom:${avgLinePct}%"></div>` : ""}
+        ${bars}
+      </div>`;
+    }
+
+    const actions = `
+    <div class="action-row">
+      <button class="action-btn ${state.showAddNote ? "active" : ""}" data-action="toggle-add-note">+ Ajouter une note</button>
+      <button class="action-btn ${state.showImportNotes ? "active" : ""}" data-action="toggle-import-notes">Importer un relevé (CSV)</button>
+    </div>`;
+
+    const addForm = state.showAddNote ? renderAddNoteForm() : "";
+    const importForm = state.showImportNotes ? renderImportNotesForm() : "";
+
+    const list = withAvg.length === 0
+      ? `<div class="empty-state">Aucune note pour l'instant. Ajoute-en une ou colle un relevé exporté.</div>`
+      : withAvg.map(renderSubjectCard).join("");
+
+    return `
+    <div class="stats-row">
+      <div class="stamp">
+        <div class="stamp-value">${globalAvg === null ? "—" : globalAvg.toFixed(2)}</div>
+        <div class="stamp-label">Moyenne générale</div>
+      </div>
+      ${chartHtml}
+    </div>
+    ${actions}
+    ${addForm}
+    ${importForm}
+    ${list}`;
+  }
+
+  function renderAddNoteForm() {
+    const options = state.subjects.map((s) => `<option value="${esc(s.name)}"></option>`).join("");
+    const today = new Date().toISOString().slice(0, 10);
+    return `
+    <form class="form-panel" data-form="add-note">
+      <div class="form-row">
+        <label class="field">Matière
+          <input list="subject-list" name="subject" placeholder="Mathématiques" required />
+          <datalist id="subject-list">${options}</datalist>
+        </label>
+        <label class="field">Note /20
+          <input name="value" type="text" placeholder="14.5" required style="width:90px" />
+        </label>
+        <label class="field">Coef.
+          <input name="coef" type="number" value="1" step="0.5" min="0.5" style="width:70px" />
+        </label>
+        <label class="field">Date
+          <input name="date" type="date" value="${today}" style="width:150px" />
+        </label>
+        <button type="submit" class="submit-btn">Ajouter</button>
+      </div>
+    </form>`;
+  }
+
+  function renderImportNotesForm() {
+    return `
+    <div class="form-panel">
+      <p class="hint-text">Colle un relevé exporté (ou un fichier .csv), une ligne par note : <code>Matière;Note;Coefficient;Date</code> — coefficient et date sont facultatifs.</p>
+      <textarea class="csv-input" id="csv-textarea" rows="6" placeholder="Mathématiques;14.5;2;12/09/2025
+Histoire-Géo;11;1"></textarea>
+      <div class="form-row" style="margin-top:10px">
+        <input type="file" id="csv-file" accept=".csv,.txt" />
+        <button class="submit-btn" style="margin-left:auto" data-action="import-notes-csv">Importer</button>
+      </div>
+    </div>`;
+  }
+
+  function renderSubjectCard(s) {
+    const open = !!state.openSubjects[s.id];
+    const below = s.avg !== null && s.avg < 10;
+    const avgColor = s.avg === null ? "var(--ink-soft)" : below ? "var(--red)" : "var(--green)";
+    let body = "";
+    if (open) {
+      const rows = [...s.notes].sort((a, b) => a.date.localeCompare(b.date)).map((n) => `
+        <tr>
+          <td style="color:var(--ink-soft)">${formatDateFr(n.date)}</td>
+          <td style="font-family:ui-monospace,monospace;font-weight:600;color:${n.value < 10 ? "var(--red)" : "var(--green)"}">${n.value}/20</td>
+          <td style="color:var(--ink-soft)">${n.coef}</td>
+          <td style="text-align:right"><button class="link-btn" data-action="delete-note" data-subject="${s.id}" data-note="${n.id}">Retirer</button></td>
+        </tr>`).join("");
+      body = `
+      <div class="subject-body">
+        <div class="subject-coef-row">
+          <label>Coefficient de la matière :</label>
+          <input type="number" min="1" step="0.5" value="${s.coef}" data-action="update-coef" data-subject="${s.id}" />
+          <button class="link-btn" style="margin-left:auto;color:var(--red)" data-action="delete-subject" data-subject="${s.id}">Supprimer la matière</button>
+        </div>
+        ${s.notes.length === 0
+          ? `<div style="font-size:13px;color:var(--ink-soft)">Aucune note sur cette période.</div>`
+          : `<table class="notes-table"><thead><tr><th>Date</th><th>Note</th><th>Coef.</th><th></th></tr></thead><tbody>${rows}</tbody></table>`}
+      </div>`;
+    }
+    return `
+    <div class="subject-card">
+      <div class="subject-head" data-action="toggle-subject" data-subject="${s.id}">
+        <div class="subject-stripe" style="background:${hashColor(s.name)}"></div>
+        <div style="flex:1">
+          <div class="subject-name">${esc(s.name)}</div>
+          <div class="subject-meta">${s.notes.length} note(s) · coef. matière ${s.coef}</div>
+        </div>
+        <div class="subject-avg" style="color:${avgColor}">${s.avg === null ? "—" : s.avg.toFixed(2)}</div>
+        <span style="color:var(--ink-soft);font-size:13px">${open ? "▲" : "▼"}</span>
+      </div>
+      ${body}
+    </div>`;
+  }
+
+  function renderScheduleView() {
+    const actions = `
+    <div class="action-row">
+      <button class="action-btn ${state.showAddCourse ? "active" : ""}" data-action="toggle-add-course">+ Ajouter un cours</button>
+      <button class="action-btn ${state.showImportICS ? "active" : ""}" data-action="toggle-import-ics">Importer un emploi du temps (.ics)</button>
+      ${state.schedule.length > 0 ? `<button class="link-btn" style="margin-left:auto" data-action="clear-schedule">Tout effacer</button>` : ""}
+    </div>`;
+    const addForm = state.showAddCourse ? renderAddCourseForm() : "";
+    const importForm = state.showImportICS ? renderImportICSForm() : "";
+    const grid = state.schedule.length === 0
+      ? `<div class="empty-state">Aucun créneau enregistré. Ajoute un cours ou importe l'export .ics de ton ENT (généralement dans les réglages de l'emploi du temps).</div>`
+      : renderWeekGrid();
+    return `${actions}${addForm}${importForm}${grid}`;
+  }
+
+  function renderAddCourseForm() {
+    const dayOptions = DAYS.map((d, i) => `<option value="${i}">${d}</option>`).join("");
+    return `
+    <form class="form-panel" data-form="add-course">
+      <div class="form-row">
+        <label class="field">Jour<select name="day">${dayOptions}</select></label>
+        <label class="field">Début<input name="start" type="time" value="08:00" style="width:110px" /></label>
+        <label class="field">Fin<input name="end" type="time" value="09:00" style="width:110px" /></label>
+        <label class="field">Matière<input name="subject" placeholder="Physique-Chimie" required style="min-width:150px" /></label>
+        <label class="field">Salle<input name="room" placeholder="B204" style="width:90px" /></label>
+        <label class="field">Professeur<input name="prof" placeholder="M. Dupont" style="min-width:130px" /></label>
+        <button type="submit" class="submit-btn">Ajouter</button>
+      </div>
+    </form>`;
+  }
+
+  function renderImportICSForm() {
+    return `
+    <div class="form-panel">
+      <p class="hint-text">Dans l'ENT HDF, l'emploi du temps propose en général un bouton "Exporter" ou une icône de calendrier qui télécharge un fichier <code>.ics</code>. Dépose-le ici.</p>
+      <input type="file" id="ics-file" accept=".ics" />
+      <div class="form-row" style="margin-top:10px">
+        <span id="ics-filename" style="font-size:12.5px;color:var(--ink-soft)">${esc(state.pendingICSName)}</span>
+        <button class="submit-btn" style="margin-left:auto" data-action="import-ics" ${state.pendingICS ? "" : "disabled"}>Importer</button>
+      </div>
+    </div>`;
+  }
+
+  function renderWeekGrid() {
+    const hours = [];
+    for (let h = HOUR_START; h <= HOUR_END; h++) hours.push(h);
+    const totalH = (HOUR_END - HOUR_START) * ROW_H;
+    const hourLabels = hours.map((h) => `<div class="hour-label" style="height:${ROW_H}px">${h}h</div>`).join("");
+    const dayHeaders = DAY_ABBR.map((d) => `<div class="day-h">${d}</div>`).join("");
+    const dayCols = DAYS.map((day, dayIdx) => {
+      const cells = hours.map((h) => `<div class="hour-cell" style="height:${ROW_H}px"></div>`).join("");
+      const blocks = state.schedule.filter((c) => c.day === dayIdx).map((c) => {
+        const [sh, sm] = c.start.split(":").map(Number);
+        const [eh, em] = c.end.split(":").map(Number);
+        const top = (sh - HOUR_START) * ROW_H + (sm / 60) * ROW_H;
+        const height = Math.max(((eh + em / 60) - (sh + sm / 60)) * ROW_H, 20);
+        const color = c.color || "var(--blue)";
+        return `
+        <div class="course-block" style="top:${top}px;height:${height}px;background:${color}22;border-left:3px solid ${color}"
+             title="${esc(c.subject)} · ${esc(c.room || "")} ${esc(c.prof || "")}"
+             data-action="delete-course" data-course="${c.id}">
+          <div class="c-name" style="color:${color}">${esc(c.subject)}</div>
+          ${height > 30 ? `<div class="c-room">${esc(c.room || "")}</div>` : ""}
+        </div>`;
+      }).join("");
+      return `<div class="day-col" style="height:${totalH}px">${cells}${blocks}</div>`;
+    }).join("");
+
+    return `
+    <div class="week-grid">
+      <div class="week-header"><div class="corner"></div>${dayHeaders}</div>
+      <div class="week-body">
+        <div class="hour-col">${hourLabels}</div>
+        ${dayCols}
+      </div>
+      <p class="week-footer">Clique sur un cours pour le retirer.</p>
+    </div>`;
+  }
+
+  // ---------- Event handling ----------
+  function attachHandlers() {
+    root.addEventListener("click", onClick);
+    root.addEventListener("submit", onSubmit);
+    root.addEventListener("change", onChange);
+  }
+
+  function onClick(e) {
+    const el = e.target.closest("[data-action]");
+    if (!el) return;
+    const action = el.dataset.action;
+    switch (action) {
+      case "set-tab":
+        state.tab = el.dataset.value; render(); break;
+      case "set-trimestre": {
+        const v = el.dataset.value;
+        state.trimestre = v === "all" ? "all" : parseInt(v, 10);
+        render(); break;
+      }
+      case "toggle-add-note":
+        state.showAddNote = !state.showAddNote; state.showImportNotes = false; render(); break;
+      case "toggle-import-notes":
+        state.showImportNotes = !state.showImportNotes; state.showAddNote = false; render(); break;
+      case "toggle-add-course":
+        state.showAddCourse = !state.showAddCourse; state.showImportICS = false; render(); break;
+      case "toggle-import-ics":
+        state.showImportICS = !state.showImportICS; state.showAddCourse = false; render(); break;
+      case "toggle-subject":
+        state.openSubjects[el.dataset.subject] = !state.openSubjects[el.dataset.subject]; render(); break;
+      case "delete-note":
+        deleteNote(el.dataset.subject, el.dataset.note); break;
+      case "delete-subject":
+        deleteSubject(el.dataset.subject); break;
+      case "delete-course":
+        deleteCourse(el.dataset.course); break;
+      case "clear-schedule":
+        state.schedule = []; save(); render(); break;
+      case "import-notes-csv": {
+        const ta = document.getElementById("csv-textarea");
+        const rows = parseNotesCSV(ta ? ta.value : "");
+        if (!rows.length) { showToast("Rien d'exploitable dans le texte collé."); break; }
+        rows.forEach((r) => addNote(r.subject, r.value, r.coef, r.date));
+        showToast(`${rows.length} note(s) importée(s).`);
+        state.showImportNotes = false; render(); break;
+      }
+      case "import-ics": {
+        const rows = state.pendingICS ? parseScheduleICS(state.pendingICS) : [];
+        if (!rows.length) { showToast("Aucun cours détecté dans ce fichier .ics."); break; }
+        state.schedule.push(...rows); save();
+        showToast(`${rows.length} créneau(x) importé(s).`);
+        state.showImportICS = false; state.pendingICS = null; state.pendingICSName = ""; render(); break;
+      }
+    }
+  }
+
+  function onChange(e) {
+    const fileInput = e.target.closest("#csv-file");
+    if (fileInput && fileInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => { document.getElementById("csv-textarea").value = reader.result; };
+      reader.readAsText(fileInput.files[0]);
+      return;
+    }
+    const icsInput = e.target.closest("#ics-file");
+    if (icsInput && icsInput.files[0]) {
+      state.pendingICSName = icsInput.files[0].name;
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.pendingICS = reader.result;
+        render();
+      };
+      reader.readAsText(icsInput.files[0]);
+      return;
+    }
+    const coefInput = e.target.closest('[data-action="update-coef"]');
+    if (coefInput) {
+      updateCoef(coefInput.dataset.subject, parseFloat(coefInput.value) || 1);
+    }
+  }
+
+  function onSubmit(e) {
+    const form = e.target.closest("form[data-form]");
+    if (!form) return;
+    e.preventDefault();
+    const kind = form.dataset.form;
+    const data = new FormData(form);
+    if (kind === "add-note") {
+      const subject = (data.get("subject") || "").trim();
+      const value = parseFloat(String(data.get("value") || "").replace(",", "."));
+      const coef = parseFloat(data.get("coef")) || 1;
+      const date = data.get("date") || new Date().toISOString().slice(0, 10);
+      if (!subject || isNaN(value)) return;
+      addNote(subject, value, coef, date);
+      showToast("Note ajoutée.");
+      state.showAddNote = false; render();
+    } else if (kind === "add-course") {
+      const subject = (data.get("subject") || "").trim();
+      if (!subject) return;
+      addCourse({
+        day: parseInt(data.get("day"), 10),
+        start: data.get("start"),
+        end: data.get("end"),
+        subject,
+        room: (data.get("room") || "").trim(),
+        prof: (data.get("prof") || "").trim(),
+      });
+      showToast("Cours ajouté.");
+      state.showAddCourse = false; render();
+    }
+  }
+
+  // ---------- Init ----------
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
